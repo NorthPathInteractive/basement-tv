@@ -40,8 +40,8 @@ const c=channels[current];activeFilm=broadcast(c).program;sourceTry=0;playAttemp
 v.src=activeFilm.sources[0];v.load();ui();
 if(powered)showPlaybackStatus('TUNING…');
 }
-function sync(){
-if(v.readyState<1||v.seeking)return;
+function sync(force=false){
+if(v.readyState<1||v.seeking||(!force&&v.readyState<3))return;
 const c=channels[current],slot=broadcast(c);
 if(slot.program!==activeFilm)return;
 const target=Math.min(slot.offset,Math.max(0,(v.duration||activeFilm.dur)-0.1));
@@ -72,10 +72,10 @@ return;
 current=i;noise.classList.remove('on');setSource();
 if(powered)startPlayback();
 }
-function muteToggle(){muted=!muted;v.muted=muted;volState.textContent=muted?'MUTED':'SOUND ON';volumeKnob.setAttribute('aria-pressed',String(muted))}v.addEventListener('loadedmetadata',()=>{if(powered)sync()});v.addEventListener('playing',()=>{if(powered&&!v.seeking)showPlaybackStatus('')});v.addEventListener('waiting',()=>{if(powered)showPlaybackStatus('TUNING…')});v.addEventListener('error',()=>{const c=activeFilm;if(sourceTry<c.sources.length-1){sourceTry++;playAttempt++;v.src=c.sources[sourceTry];v.load();if(powered){showPlaybackStatus('TUNING…');startPlayback()}}else{nowText.textContent='SOURCE ERROR';if(powered)showPlaybackStatus('SIGNAL LOST · TAP CHANNEL TO RETRY')}});btns.forEach(b=>b.addEventListener('click',()=>changeChannel(+b.dataset.ch)));channelKnob.addEventListener('click',()=>changeChannel((current+1)%channels.length));volumeKnob.addEventListener('click',muteToggle);power.addEventListener('click',powerToggle);function tuneBroadcast(){
+function muteToggle(){muted=!muted;v.muted=muted;volState.textContent=muted?'MUTED':'SOUND ON';volumeKnob.setAttribute('aria-pressed',String(muted))}v.addEventListener('loadedmetadata',()=>{if(powered)sync(true)});v.addEventListener('playing',()=>{if(powered&&!v.seeking)showPlaybackStatus('')});v.addEventListener('waiting',()=>{if(powered)showPlaybackStatus('TUNING…')});v.addEventListener('error',()=>{const c=activeFilm;if(sourceTry<c.sources.length-1){sourceTry++;playAttempt++;v.src=c.sources[sourceTry];v.load();if(powered){showPlaybackStatus('TUNING…');startPlayback()}}else{nowText.textContent='SOURCE ERROR';if(powered)showPlaybackStatus('SIGNAL LOST · TAP CHANNEL TO RETRY')}});btns.forEach(b=>b.addEventListener('click',()=>changeChannel(+b.dataset.ch)));channelKnob.addEventListener('click',()=>changeChannel((current+1)%channels.length));volumeKnob.addEventListener('click',muteToggle);power.addEventListener('click',powerToggle);function tuneBroadcast(){
 if(!powered)return;
 if(broadcast(channels[current]).program!==activeFilm){setSource();startPlayback()}
-else{sync();if(v.ended)startPlayback()}
+else{const ended=v.ended;sync();if(ended)startPlayback()}
 }
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&powered){tuneBroadcast();startPlayback()}});
 setInterval(()=>{if(powered&&!document.hidden)tuneBroadcast()},1000);setSource();</script><script>
